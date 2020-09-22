@@ -39,6 +39,7 @@
 #include "glwInitES20Direct.hpp"
 #include "glwInitES30Direct.hpp"
 #include "glwInitFunctions.hpp"
+#include "tcuCommandLine.hpp"
 #include "tcuFunctionLibrary.hpp"
 #include "tcuPixelFormat.hpp"
 #include "tcuPlatform.hpp"
@@ -66,6 +67,15 @@ using std::vector;
 	#define EGL_NO_RESET_NOTIFICATION_KHR				0x31BE
 	#define EGL_OPENGL_ES3_BIT_KHR					0x00000040
 #endif // EGL_KHR_create_context
+
+#ifndef EGL_MESA_surfaceless_rotation
+#define EGL_MESA_surfaceless_rotation
+#define EGL_TRANSFORM_MESA         0x31DE
+#define EGL_TRANSFORM_NONE_MESA    0x00
+#define EGL_TRANSFORM_FLIP_X_MESA  0x01
+#define EGL_TRANSFORM_FLIP_Y_MESA  0x02
+#define EGL_TRANSFORM_SWAP_XY_MESA 0x04
+#endif
 
 // Default library names
 #if !defined(DEQP_GLES2_LIBRARY_PATH)
@@ -305,6 +315,23 @@ EglRenderContext::EglRenderContext(const glu::RenderConfig& config, const tcu::C
 			throw tcu::NotSupportedError("surfaceless platform does not support --deqp-surface-type=window");
 		case glu::RenderConfig::SURFACETYPE_LAST:
 			TCU_CHECK_INTERNAL(false);
+	}
+
+	switch (cmdLine.getScreenRotation()) {
+		case SCREENROTATION_90:
+			surface_attribs.push_back(EGL_TRANSFORM_MESA);
+			surface_attribs.push_back(EGL_TRANSFORM_SWAP_XY_MESA);
+			break;
+		case SCREENROTATION_180:
+			surface_attribs.push_back(EGL_TRANSFORM_MESA);
+			surface_attribs.push_back(EGL_TRANSFORM_FLIP_X_MESA | EGL_TRANSFORM_FLIP_Y_MESA);
+			break;
+		case SCREENROTATION_270:
+			surface_attribs.push_back(EGL_TRANSFORM_MESA);
+			surface_attribs.push_back(EGL_TRANSFORM_FLIP_X_MESA | EGL_TRANSFORM_FLIP_Y_MESA | EGL_TRANSFORM_SWAP_XY_MESA);
+			break;
+		default:
+			break;
 	}
 
 	surface_attribs.push_back(EGL_NONE);
